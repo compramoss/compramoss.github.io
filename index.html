@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080d09">
+<title>The Compramos Server</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 76px 24px 24px;
+    font-family: Arial, sans-serif;
+    color: #a0b9a5;
+    background-color: #0b0908;
+    background-image:
+        radial-gradient(circle at 18% 20%, rgba(31,91,43,.16), transparent 32%),
+        radial-gradient(circle at 82% 78%, rgba(25,78,37,.12), transparent 34%),
+        linear-gradient(rgba(112,145,117,.10) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(112,145,117,.10) 1px, transparent 1px);
+    background-size: auto, auto, 40px 40px, 40px 40px;
+    overflow-x: hidden;
+    position: relative;
+}
+
+.topbar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100%;
+    height: 53px;
+    z-index: 99999 !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    background: rgba(7,8,7,.96);
+    border-bottom: 1px solid rgba(145,160,146,.14);
+    isolation: isolate;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.brand-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    border-radius: 9px;
+}
+
+.brand-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    object-fit: cover;
+    border: 1px solid rgba(110,150,115,.25);
+    box-shadow: 0 2px 10px rgba(0,0,0,.3);
+    transition: border-color .2s ease, filter .2s ease;
+}
+
+.brand-link:hover .brand-mark {
+    border-color: rgba(110,180,120,.65);
+    filter: brightness(1.12);
+}
+
+.social-menu {
+    position: relative;
+}
+
+.share-button {
+    width: 37px;
+    height: 37px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    color: #d0d8d1;
+    background: rgba(30,32,30,.8);
+    border: 1px solid rgba(145,160,146,.19);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .2s ease, border-color .2s ease;
+}
+
+.share-button:hover,
+.share-button[aria-expanded="true"] {
+    background: rgba(53,64,54,.85);
+    border-color: rgba(130,165,135,.4);
+}
+
+.share-button svg {
+    width: 19px;
+    height: 19px;
+}
+
+.dropdown {
+    position: absolute;
+    top: 45px;
+    right: 0;
+    width: 190px;
+    padding: 6px;
+    background: rgba(27,26,25,.97);
+    border: 1px solid rgba(145,160,146,.13);
+    border-radius: 11px;
+    box-shadow: 0 12px 35px rgba(0,0,0,.4);
+    backdrop-filter: blur(14px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-5px) scale(.97);
+    transform-origin: top right;
+    transition: opacity .22s ease, transform .22s ease, visibility .22s ease;
+    z-index: 100000;
+}
+
+.dropdown.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+}
+
+.dropdown a {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 9px;
+    border-radius: 7px;
+    color: #dededc;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background .18s ease, color .18s ease;
+}
+
+.dropdown a:hover {
+    background: rgba(120,145,122,.15);
+    color: #fff;
+}
+
+.dropdown a svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: #aeb5ae;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: -50%;
+    z-index: 0;
+    pointer-events: none;
+    background: conic-gradient(
+        from 0deg,
+        transparent 0deg, transparent 55deg,
+        rgba(20,100,43,.13) 85deg,
+        transparent 115deg, transparent 145deg,
+        rgba(15,85,35,.15) 175deg,
+        transparent 205deg, transparent 235deg,
+        rgba(25,110,48,.13) 265deg,
+        transparent 295deg, transparent 360deg
+    );
+    animation: reverseGlow 35s linear infinite;
+}
+
+@keyframes reverseGlow {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+}
+
+.cursor-glow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 230px;
+    height: 230px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+    background: radial-gradient(
+        circle,
+        rgba(35,125,55,.12),
+        rgba(20,80,35,.045) 40%,
+        transparent 72%
+    );
+    transform: translate(-50%,-50%);
+    opacity: 0;
+    transition: opacity .3s ease;
+}
+
+.container {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 780px;
+    padding: 42px 25px;
+    text-align: center;
+}
+
+h1 {
+    margin: 0;
+    font-size: clamp(34px,6vw,58px);
+    font-weight: 800;
+    letter-spacing: -1.8px;
+    color: #a0b9a5;
+    text-shadow: 0 0 25px rgba(35,110,50,.12);
+}
+
+h1 span {
+    color: #4f9b60;
+}
+
+.subtitle {
+    margin: 15px auto 0;
+    max-width: 620px;
+    color: #78927d;
+    font-size: clamp(15px,2vw,19px);
+    line-height: 1.6;
+}
+
+.server-address {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 13px;
+    margin-top: 27px;
+    padding: 10px 12px 10px 17px;
+    min-height: 48px;
+    border: 1px solid rgba(140,155,141,.16);
+    border-radius: 9px;
+    background: rgba(35,38,35,.72);
+    color: #d2ded3;
+    box-shadow: 0 5px 18px rgba(0,0,0,.22);
+    overflow: hidden;
+}
+
+.server-ip {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .2px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.copy-ip {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    color: #c2d0c4;
+    background: transparent;
+    border: 0;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease;
+}
+
+.copy-ip:hover {
+    background: rgba(110,155,116,.17);
+    color: #fff;
+}
+
+.copy-ip svg {
+    width: 16px;
+    height: 16px;
+}
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.invite-button {
+    position: relative;
+    overflow: hidden;
+    min-width: 150px;
+    min-height: 40px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 9px 17px;
+    border: 1px solid rgba(75,132,83,.38);
+    border-radius: 7px;
+    color: #b2c7b5;
+    background: rgba(7,19,10,.88);
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform .2s ease, border-color .2s ease,
+                background .2s ease, color .2s ease;
+}
+
+.invite-button:hover {
+    transform: translateY(-2px);
+    color: #d6e7d9;
+    border-color: rgba(95,170,105,.65);
+    background: rgba(13,34,17,.96);
+}
+
+.learn-more {
+    background: rgba(35,48,37,.34);
+    border-color: rgba(135,158,137,.24);
+    color: #a6b7a8;
+    backdrop-filter: blur(8px);
+}
+
+.learn-more:hover {
+    background: rgba(57,79,60,.42);
+    border-color: rgba(135,175,140,.45);
+}
+
+.server-schedule {
+    margin: 14px auto 0;
+    color: #78927d;
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+#status {
+    min-height: 18px;
+    margin-top: 17px;
+    color: #78a982;
+    font-size: 13px;
+}
+
+button,
+a.invite-button {
+    position: relative;
+    overflow: hidden;
+}
+
+button::before,
+a.invite-button::before,
+.server-address::before {
+    content: "";
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    left: var(--mouse-x, 50%);
+    top: var(--mouse-y, 50%);
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(
+        circle,
+        rgba(125,190,130,.17) 0%,
+        rgba(100,160,105,.08) 40%,
+        transparent 72%
+    );
+    transition: opacity .15s ease;
+}
+
+button:hover::before,
+a.invite-button:hover::before,
+.server-address:hover::before {
+    opacity: 1;
+}
+
+.server-address > *,
+button > *,
+a.invite-button > * {
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 30px 8px;
+    }
+
+    .buttons {
+        gap: 9px;
+    }
+
+    .invite-button {
+        min-width: 140px;
+    }
+
+    .server-address {
+        margin-top: 23px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body::before {
+        animation: none;
+    }
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+    <a class="brand-link" href="https://compramoss.github.io/" aria-label="Compramos home">
+        <img class="brand-mark" src="./logo.png" alt="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRc85zUxXuTy-tqc31sQN8XZ153Gv6fxev0eW06TzrQAA&s=10">
+    </a>
+
+    <div class="social-menu">
+        <button class="share-button" id="shareButton" type="button"
+            aria-label="Open social links"
+            aria-expanded="false"
+            aria-controls="socialDropdown">
+
+            <svg viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round"
+                aria-hidden="true">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <path d="M8.7 10.7 15.3 6.3"></path>
+                <path d="m8.7 13.3 6.6 4.4"></path>
+            </svg>
+        </button>
+
+        <div class="dropdown" id="socialDropdown">
+            <a href="https://discord.gg/aRNdStmj2X"
+                target="_blank" rel="noopener noreferrer">
+
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M19.7 5.1A18.5 18.5 0 0 0 15.2 3.7l-.6 1.2a17 17 0 0 0-5.2 0l-.6-1.2a18.5 18.5 0 0 0-4.5 1.4C1.5 9.3.7 13.4 1.1 17.5a18.4 18.4 0 0 0 5.5 2.8l1.2-2a11.8 11.8 0 0 1-1.9-.9l.5-.4a13.2 13.2 0 0 0 11.2 0l.5.4a11.8 11.8 0 0 1-1.9.9l1.2 2a18.4 18.4 0 0 0 5.5-2.8c.5-4.7-.8-8.8-3.2-12.4ZM8.5 14.8c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2Zm7 0c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2Z"></path>
+                </svg>
+                Discord
+            </a>
+
+            <a href="https://mango-smp.github.io/"
+                target="_blank" rel="noopener noreferrer">
+
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 .9a11.1 11.1 0 0 0-3.51 21.63c.55.1.76-.24.76-.53v-2.08c-3.1.67-3.75-1.32-3.75-1.32-.5-1.29-1.23-1.63-1.23-1.63-1.01-.69.08-.68.08-.68 1.12.08 1.71 1.15 1.71 1.15.99 1.7 2.6 1.21 3.23.92.1-.72.39-1.21.7-1.49-2.48-.28-5.09-1.24-5.09-5.52 0-1.22.44-2.22 1.15-3-.12-.28-.5-1.42.11-2.96 0 0 .94-.3 3.05 1.15a10.6 10.6 0 0 1 5.55 0c2.11-1.45 3.05-1.15 3.05-1.15.61 1.54.23 2.68.11 2.96.72.78 1.15 1.78 1.15 3 0 4.29-2.61 5.23-5.1 5.51.4.35.75 1.03.75 2.08V22c0 .29.2.64.77.53A11.1 11.1 0 0 0 12 .9Z"></path>
+                </svg>
+                Try My Friend Server
+            </a>
+        </div>
+    </div>
+</header>
+
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<main class="container">
+    <h1>Join <span>Compramos</span> Server</h1>
+
+    <p class="subtitle">
+        No AntiCheat, No Moderation, Yes Freedom
+    </p>
+
+    <div class="server-address">
+        <span class="server-ip">compramos.play.hosting</span>
+
+        <button class="copy-ip" id="copyIp" type="button"
+            aria-label="Copy server IP"
+            title="Copy server IP">
+
+            <svg id="copyIcon" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor"
+                stroke-width="1.8" stroke-linecap="round"
+                stroke-linejoin="round" aria-hidden="true">
+
+                <rect x="8" y="8" width="12" height="12" rx="2"></rect>
+                <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>
+            </svg>
+        </button>
+    </div>
+
+    <div class="buttons">
+        <a class="invite-button"
+            href="https://discord.gg/aRNdStmj2X"
+            target="_blank" rel="noopener noreferrer">
+            Join Our Discord
+        </a>
+
+        <a class="invite-button learn-more"
+            href="https://dn801200.us.archive.org/0/items/rick-astley-never-gonna-give-you-up-official-music-video-1080p/y2mate.com%20-%20Rick%20Astley%20%20Never%20Gonna%20Give%20You%20Up%20Official%20Music%20Video_1080p.ia.mp4"
+            target="_blank" rel="noopener noreferrer">
+            Learn More
+        </a>
+    </div>
+
+    <p class="server-schedule">Server Usually Starts At 14:50 UTC<br>Server Usually Stops At 20:30 UTC</p>
+
+    <p id="status" role="status" aria-live="polite"></p>
+</main>
+
+<script>
+const serverIp = "compramos.play.hosting";
+
+const copyButton = document.getElementById("copyIp");
+const shareButton = document.getElementById("shareButton");
+const dropdown = document.getElementById("socialDropdown");
+const glow = document.getElementById("cursorGlow");
+
+const copyIcon = `
+<rect x="8" y="8" width="12" height="12" rx="2"/>
+<path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>
+`;
+
+const checkIcon = `
+<path d="m5 12 4 4L19 6"/>
+`;
+
+let copyTimeout;
+
+copyButton.addEventListener("click", async () => {
+    try {
+        await navigator.clipboard.writeText(serverIp);
+    } catch {
+        const field = document.createElement("textarea");
+        field.value = serverIp;
+        field.style.position = "fixed";
+        field.style.opacity = "0";
+        document.body.appendChild(field);
+        field.select();
+
+        const copied = document.execCommand("copy");
+        field.remove();
+
+        if (!copied) return;
+    }
+
+    const svg = copyButton.querySelector("svg");
+    svg.innerHTML = checkIcon;
+
+    clearTimeout(copyTimeout);
+
+    copyTimeout = setTimeout(() => {
+        svg.innerHTML = copyIcon;
+    }, 3000);
+});
+
+function closeDropdown() {
+    dropdown.classList.remove("open");
+    shareButton.setAttribute("aria-expanded", "false");
+}
+
+function toggleDropdown() {
+    const isOpen = dropdown.classList.toggle("open");
+    shareButton.setAttribute("aria-expanded", String(isOpen));
+}
+
+shareButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    toggleDropdown();
+});
+
+document.addEventListener("click", (event) => {
+    if (!event.target.closest(".social-menu")) {
+        closeDropdown();
+    }
+});
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+        closeDropdown();
+        shareButton.focus();
+    }
+});
+
+dropdown.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", closeDropdown);
+});
+
+document.querySelectorAll(
+    "button, a.invite-button, .server-address"
+).forEach((element) => {
+    element.addEventListener("mousemove", (event) => {
+        const rect = element.getBoundingClientRect();
+
+        element.style.setProperty(
+            "--mouse-x",
+            (event.clientX - rect.left) + "px"
+        );
+
+        element.style.setProperty(
+            "--mouse-y",
+            (event.clientY - rect.top) + "px"
+        );
+    });
+});
+
+document.addEventListener("mousemove", (event) => {
+    glow.style.left = event.clientX + "px";
+    glow.style.top = event.clientY + "px";
+
+    const overInteractive = event.target.closest(
+        "button, a, .server-address"
+    );
+
+    glow.style.opacity = overInteractive ? "0" : "1";
+});
+
+document.addEventListener("mouseleave", () => {
+    glow.style.opacity = "0";
+});
+</script>
+
+</body>
+</html>
